@@ -1,10 +1,14 @@
-reg_gaps <- function(data, cohort = "ACTIVE", type) {
+reg_gaps <- function(reglist, cohort = "ACTIVE", type) {
+
+  data <- janitor::clean_names(reglist)
 
   if (!is.data.frame(data)) {
     stop("The object is not a dataframe")
   }
 
   cohort <- toupper(cohort)
+
+
 
   if (!cohort %in% c("ACTIVE", "EXITED")) {
     stop("Cohort must be 'ACTIVE' or 'EXITED'")
@@ -28,12 +32,18 @@ reg_gaps <- function(data, cohort = "ACTIVE", type) {
       distinct(cpims_ovc_id, .keep_all = TRUE) |>
       filter(check)
 
+    duplicated_bc <- data |>
+      filter(!is.na(bcertnumber)) |>
+      janitor::get_dupes(bcertnumber)
+
     if (type == "overage") {
       return(overaged)
     } else if (type == "not in school") {
       return(btn18_20_nis)
+    } else if (type == 'duplicated_bc') {
+      return (duplicated_bc)
     } else {
-      stop("For ACTIVE cohort, type must be 'overage' or 'not in school'")
+      stop("For ACTIVE cohort, type must be 'overage', 'not in school', 'duplicated_bc'")
     }
 
 
