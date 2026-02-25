@@ -5,9 +5,9 @@ reg_sub <- function(reglist,
   status <- match.arg(status)
   status <- toupper(status)
 
-  # if (status == "EXITED" && is.null(fy)) {
-  #   stop("You must supply a financial year (fy) when requesting EXITED records.")
-  # }
+  if (status == "EXITED" && is.null(fy)) {
+    stop("You must supply a financial year (fy) when requesting EXITED records.")
+  }
 
   data <- janitor::clean_names(reglist) |>
     dplyr::mutate(exit_date = as.Date(exit_date, format = "%d/%m/%Y")) |>
@@ -45,12 +45,12 @@ reg_sub <- function(reglist,
   # Base EXITED subset
 
   exited_data <- data |>
-    filter(exit_status == 'EXITED', !is.na(exit_date)) |>
-    distinct(cpims_ovc_id, .keep_all = TRUE)
+    dplyr::filter(exit_status == "EXITED") |>
+    dplyr::distinct(cpims_ovc_id, .keep_all = TRUE)
 
-  if (status == "EXITED") {
-    return(
-      exited_data
-    )
-  }
+if (status == 'EXITED') {
+  return(
+    exited_data[exited_data$fin_year == fy, ]
+  )
+}
 }
