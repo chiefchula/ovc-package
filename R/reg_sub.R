@@ -71,7 +71,8 @@ reg_sub <- function(
   data <- reglist |>
     janitor::clean_names() |>
     dplyr::mutate(
-      exit_date = as.Date(exit_date, format = "%d/%m/%Y"),
+      exit_date = lubridate::parse_date_time(exit_date,
+                                             orders = c("dmy", "ymd", "mdy")),
       exit_fin_year = dplyr::if_else(
         is.na(exit_date),
         NA_character_,
@@ -99,7 +100,8 @@ reg_sub <- function(
     cat("Cohort distribution:\n")
     active_data |>
       dplyr::count(ovchivstatus, sort = TRUE) |>
-      dplyr::filter(!is.na(ovchivstatus)) |>
+      # dplyr::filter(!is.na(ovchivstatus)) |>
+      janitor::adorn_totals('row') |>
       print()
 
     # Apply cohort filters
@@ -153,6 +155,14 @@ reg_sub <- function(
       result <- dplyr::filter(exited_base, exit_fin_year == target_fy)
 
       cat("ALL cohort in", target_fy, ":", nrow(result), "records\n")
+      cat("Breakdown of All Exited in", target_fy,":\n")
+      exited_base |>
+        dplyr::filter(exit_fin_year == target_fy) |>
+        dplyr::mutate(exit_pathway = dplyr::if_else(exit_reason == 'Case Plan Achievement', 'Graduated (CPA)','Exited Without Graduation (EWG)')) |>
+        dplyr::count(exit_pathway, sort = TRUE) |>
+        janitor::adorn_totals('row') |>
+        print()
+      return(result)
       cat("First few exit_fin_year values in result:",
           paste(head(result$exit_fin_year), collapse = ", "), "\n")
 
@@ -174,6 +184,13 @@ reg_sub <- function(
                               exit_fin_year == target_fy)
 
       cat("EWG cohort in", target_fy, ":", nrow(result), "records\n")
+      cat("Breakdown of Exited Without Graduation in", target_fy,":\n")
+      exited_base |>
+        dplyr::filter(exit_fin_year == target_fy) |>
+        dplyr::filter(exit_reason != "Case Plan Achievement") |>
+        dplyr::count(exit_reason, sort = TRUE) |>
+        janitor::adorn_totals('row') |>
+        print()
       return(result)
     }
 
